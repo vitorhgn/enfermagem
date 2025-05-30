@@ -1,5 +1,6 @@
 import { useLocalSearchParams } from "expo-router";
-import React, { useState } from "react";
+import axios from "axios";
+import React, { useEffect, useState } from "react";
 import {
   Alert,
   ScrollView,
@@ -8,95 +9,184 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  ActivityIndicator,
 } from "react-native";
 
+type Resposta = {
+  ID_PERGUNTA: number;
+  PERGUNTA?: string;
+  TIPO?: "S" | "O" | "A";
+  RESPSUBJET?: string;
+  RESPOBJET?: boolean | string;
+};
+
 export default function AnamneseScreen() {
-  const { userType, status } = useLocalSearchParams();
+  const { userType, status, id, pacienteId, profissionalId } =
+    useLocalSearchParams();
   const isEstagiario = userType === "estagiario";
   const isSupervisor = userType === "supervisor";
-  const isCoordenador = userType === "coordenador";
-  const isReprovadaOuPendente = status === "Reprovado" || status === "Pendente";
+  const isNova = id === "novo";
+  const isEditable = isEstagiario && (isNova || status === "Reprovado");
 
-  const [cpf, setCpf] = useState("123.456.789-10");
-  const [sexo, setSexo] = useState("Masculino");
-  const [rg, setRg] = useState("1234567");
-  const [leito, setLeito] = useState("Leito 2");
-  const [escolaridade, setEscolaridade] = useState("Superior");
-  const [profissao, setProfissao] = useState("Enfermeiro");
-  const [diagnostico, setDiagnostico] = useState("Hipertensão");
+  const [carregando, setCarregando] = useState(true);
   const [observacao, setObservacao] = useState("");
+  const [respostas, setRespostas] = useState<Resposta[]>([]);
 
-  const isEditable = (isEstagiario && isReprovadaOuPendente) || isEstagiario;
-
-  const handleSalvar = () => {
-    Alert.alert("Anamnese salva!");
-  };
-
-  const handleReprovar = () => {
-    if (!observacao.trim()) {
-      return Alert.alert("Erro", "Observação é obrigatória ao reprovar.");
+  useEffect(() => {
+    async function carregarDados() {
+      try {
+        if (isNova) {
+          const { data: perguntas } = await axios.get(
+            "http://192.168.15.8:3000/perguntas"
+          );
+          const respostasIniciais = perguntas.map((p: any) => ({
+            ID_PERGUNTA: p.IDPERGUNTA,
+            PERGUNTA: p.PERGUNTA,
+            TIPO: p.TIPO,
+            RESPSUBJET: "",
+            RESPOBJET: false,
+          }));
+          setRespostas(respostasIniciais);
+        } else {
+          const { data } = await axios.get(
+            `http://192.168.15.8:3000/anamnese/${id}`
+          );
+          setRespostas(data.respostas || []);
+          setObservacao(data.OBSERVACOES || "");
+        }
+      } catch (error) {
+        console.error("Erro:", error);
+        Alert.alert("Erro", "Não foi possível carregar os dados.");
+      } finally {
+        setCarregando(false);
+      }
     }
-    Alert.alert("Anamnese reprovada!");
-  };
 
-  const handleAprovar = () => {
-    Alert.alert("Anamnese aprovada!");
-  };
+    carregarDados();
+  }, []);
+
+  async function handleSalvar() {
+    try {
+      await axios.post("http://192.168.15.8:3000/anamnese", {
+        ID_PACIENTE: Number(pacienteId),
+        ID_PROFISSIO: Number(profissionalId),
+        NOMERESP: "Responsável Fictício",
+        CPFRESP: "12345678901",
+        AUTVISIB: true,
+        STATUSANM: "PENDENTE",
+        STATUSFUNC: 1,
+        OBSERVACOES: "",
+        respostas: respostas.map((r) => ({
+          ID_PERGUNTA: r.ID_PERGUNTA,
+          RESPSUBJET: r.RESPSUBJET,
+          RESPOBJET: r.RESPOBJET,
+        })),
+      });
+      Alert.alert("Sucesso", "Anamnese salva com sucesso.");
+    } catch (err) {
+      Alert.alert("Erro", "Não foi possível salvar.");
+    }
+  }
+
+  async function handleAprovar() {
+    try {
+      await axios.post(`http://192.168.15.8:3000/anamnese/${id}/aprovar`);
+      Alert.alert("Sucesso", "Anamnese aprovada.");
+    } catch {
+      Alert.alert("Erro", "Erro ao aprovar.");
+    }
+  }
+
+  async function handleReprovar() {
+    if (!observacao.trim()) {
+      return Alert.alert("Erro", "Observação obrigatória para reprovar.");
+    }
+    try {
+      await axios.post(`http://192.168.15.8:3000/anamnese/${id}/reprovar`, {
+        observacoes: observacao,
+      });
+      Alert.alert("Sucesso", "Anamnese reprovada.");
+    } catch {
+      Alert.alert("Erro", "Erro ao reprovar.");
+    }
+  }
+
+  if (carregando) {
+    return (
+      <View style={styles.container}>
+        <ActivityIndicator size="large" color="#005F3C" />
+      </View>
+    );
+  }
 
   return (
     <ScrollView style={styles.container}>
       <Text style={styles.title}>Ficha de Anamnese</Text>
 
       <View style={styles.form}>
-        <TextInput
-          style={styles.input}
-          placeholder="CPF"
-          value={cpf}
-          onChangeText={setCpf}
-          editable={isEditable}
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Sexo"
-          value={sexo}
-          onChangeText={setSexo}
-          editable={isEditable}
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="RG"
-          value={rg}
-          onChangeText={setRg}
-          editable={isEditable}
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Leito"
-          value={leito}
-          onChangeText={setLeito}
-          editable={isEditable}
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Escolaridade"
-          value={escolaridade}
-          onChangeText={setEscolaridade}
-          editable={isEditable}
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Profissão"
-          value={profissao}
-          onChangeText={setProfissao}
-          editable={isEditable}
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Diagnóstico Médico"
-          value={diagnostico}
-          onChangeText={setDiagnostico}
-          editable={isEditable}
-        />
+        {respostas.map((res, index) => (
+          <View key={res.ID_PERGUNTA} style={{ marginBottom: 16 }}>
+            <Text style={styles.label}>{res.PERGUNTA}</Text>
+
+            {res.TIPO === "S" && (
+              <TextInput
+                style={styles.input}
+                placeholder="Digite a resposta"
+                placeholderTextColor="#999"
+                value={res.RESPSUBJET}
+                onChangeText={(text) => {
+                  const novas = [...respostas];
+                  novas[index].RESPSUBJET = text;
+                  setRespostas(novas);
+                }}
+                editable={isEditable}
+              />
+            )}
+
+            {res.TIPO === "A" && (
+              <TextInput
+                style={[styles.input, styles.textArea]}
+                placeholder="Descreva com detalhes..."
+                placeholderTextColor="#999"
+                multiline
+                value={res.RESPSUBJET}
+                onChangeText={(text) => {
+                  const novas = [...respostas];
+                  novas[index].RESPSUBJET = text;
+                  setRespostas(novas);
+                }}
+                editable={isEditable}
+              />
+            )}
+
+            {res.TIPO === "O" && (
+              <TouchableOpacity
+                style={styles.select}
+                onPress={() => {
+                  if (!isEditable) return;
+                  Alert.prompt("Resposta", res.PERGUNTA || "", [
+                    {
+                      text: "Cancelar",
+                      style: "cancel",
+                    },
+                    {
+                      text: "Salvar",
+                      onPress: (value) => {
+                        const novas = [...respostas];
+                        novas[index].RESPOBJET = value;
+                        setRespostas(novas);
+                      },
+                    },
+                  ]);
+                }}
+              >
+                <Text style={{ color: res.RESPOBJET ? "#000" : "#999" }}>
+                  {res.RESPOBJET || "Selecione uma resposta"}
+                </Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        ))}
 
         {isSupervisor && (
           <>
@@ -108,7 +198,7 @@ export default function AnamneseScreen() {
               onChangeText={setObservacao}
             />
             <Text style={styles.obrigatorio}>
-              Obrigatório preencher ao reprovar o paciente.
+              Obrigatório preencher ao reprovar.
             </Text>
           </>
         )}
@@ -162,17 +252,29 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 3,
   },
+  label: {
+    marginBottom: 6,
+    color: "#005F3C",
+    fontWeight: "bold",
+    fontSize: 14,
+  },
   input: {
     backgroundColor: "#F7F7F7",
     padding: 12,
     borderRadius: 10,
-    marginBottom: 12,
     fontSize: 14,
     color: "#000",
   },
   textArea: {
     height: 100,
     textAlignVertical: "top",
+  },
+  select: {
+    backgroundColor: "#F7F7F7",
+    padding: 12,
+    borderRadius: 10,
+    justifyContent: "center",
+    height: 48,
   },
   salvar: {
     backgroundColor: "#005F3C",

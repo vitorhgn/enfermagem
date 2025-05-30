@@ -20,16 +20,28 @@ export default function LoginScreen() {
   const router = useRouter();
 
   const handleLogin = () => {
-    const loginValido =
-      senha === "123" &&
-      ["estagiario", "supervisor", "coordenador"].includes(
-        usuario.toLowerCase()
-      );
+    const userType = usuario.toLowerCase() as
+      | "estagiario"
+      | "supervisor"
+      | "coordenador";
+
+    const validUsers = {
+      estagiario: 1,
+      supervisor: 2,
+      coordenador: 3,
+    };
+
+    const idProfissio = validUsers[userType];
+
+    const loginValido = senha === "123" && idProfissio;
 
     if (loginValido) {
       router.push({
         pathname: "/pacientes",
-        params: { userType: usuario.toLowerCase() },
+        params: {
+          userType,
+          idProfissio: idProfissio.toString(), // o Expo Router envia como string
+        },
       });
     } else {
       Alert.alert("Erro", "Usuário ou senha inválidos.");

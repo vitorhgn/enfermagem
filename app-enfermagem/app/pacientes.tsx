@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import {
   FlatList,
@@ -5,20 +6,43 @@ import {
   Text,
   TouchableOpacity,
   View,
+  Alert,
 } from "react-native";
 
-const pacientes = [
-  { id: "1", nome: "Albert Flores", cpf: "123.456.789-10", status: "Aprovado" },
-  { id: "2", nome: "Albert Flores", cpf: "123.456.789-10", status: "Pendente" },
+type AnamneseStatus = "Aprovado" | "Pendente" | "Reprovado";
+
+type Paciente = {
+  id: string;
+  nome: string;
+  cpf: string;
+  anamnese: {
+    id: string;
+    status: AnamneseStatus;
+  } | null;
+};
+
+const mockPacientes: Paciente[] = [
+  {
+    id: "1",
+    nome: "João Silva",
+    cpf: "111.222.333-44",
+    anamnese: { id: "101", status: "Aprovado" },
+  },
+  {
+    id: "2",
+    nome: "Maria Souza",
+    cpf: "555.666.777-88",
+    anamnese: null,
+  },
   {
     id: "3",
-    nome: "Albert Flores",
-    cpf: "123.456.789-10",
-    status: "Reprovado",
+    nome: "Carlos Lima",
+    cpf: "999.000.111-22",
+    anamnese: { id: "103", status: "Reprovado" },
   },
 ];
 
-const getStatusColor = (status: string) => {
+const getStatusColor = (status: AnamneseStatus) => {
   switch (status) {
     case "Aprovado":
       return "#1DB954";
@@ -32,18 +56,36 @@ const getStatusColor = (status: string) => {
 };
 
 export default function ListaPacientesScreen() {
-  const { userType } = useLocalSearchParams();
+  const { userType } = useLocalSearchParams<{ userType: string }>();
   const router = useRouter();
+  const [pacientes, setPacientes] = useState<Paciente[]>(mockPacientes);
 
-  const handlePress = (paciente: any) => {
-    router.push({
-      pathname: "/anamnese/[id]",
-      params: {
-        id: paciente.id,
-        userType: userType as string,
-        status: paciente.status,
-      },
-    });
+  const handlePress = (paciente: Paciente) => {
+    const user = String(userType).toLowerCase();
+
+    if (!paciente.anamnese) {
+      if (user === "estagiario") {
+        router.push({
+          pathname: "/anamnese/[id]",
+          params: {
+            id: "novo",
+            pacienteId: paciente.id,
+            userType: user,
+          },
+        });
+      } else {
+        Alert.alert("Sem Anamnese", "Este paciente ainda não possui anamnese.");
+      }
+    } else {
+      router.push({
+        pathname: "/anamnese/[id]",
+        params: {
+          id: paciente.anamnese.id,
+          userType: user,
+          status: paciente.anamnese.status,
+        },
+      });
+    }
   };
 
   return (
@@ -62,32 +104,28 @@ export default function ListaPacientesScreen() {
         <FlatList
           data={pacientes}
           keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            <TouchableOpacity onPress={() => handlePress(item)}>
-              <View style={styles.tableRow}>
-                <Text style={[styles.cell, { flex: 0.5 }]} numberOfLines={1}>
-                  {item.id}
-                </Text>
-                <Text style={[styles.cell, { flex: 2.5 }]} numberOfLines={1}>
-                  {item.nome}
-                </Text>
-                <Text style={[styles.cell, { flex: 2.5 }]} numberOfLines={1}>
-                  {item.cpf}
-                </Text>
-                <View style={[styles.badgeContainer, { flex: 2 }]}>
-                  <Text
-                    style={[
-                      styles.badge,
-                      { backgroundColor: getStatusColor(item.status) },
-                    ]}
-                    numberOfLines={1}
-                  >
-                    {item.status}
-                  </Text>
+          renderItem={({ item }) => {
+            const status = item.anamnese?.status ?? "Pendente";
+            return (
+              <TouchableOpacity onPress={() => handlePress(item)}>
+                <View style={styles.tableRow}>
+                  <Text style={[styles.cell, { flex: 0.5 }]}>{item.id}</Text>
+                  <Text style={[styles.cell, { flex: 2 }]}>{item.nome}</Text>
+                  <Text style={[styles.cell, { flex: 1.5 }]}>{item.cpf}</Text>
+                  <View style={[styles.badgeContainer, { flex: 1 }]}>
+                    <Text
+                      style={[
+                        styles.badge,
+                        { backgroundColor: getStatusColor(status) },
+                      ]}
+                    >
+                      {status}
+                    </Text>
+                  </View>
                 </View>
-              </View>
-            </TouchableOpacity>
-          )}
+              </TouchableOpacity>
+            );
+          }}
         />
       </View>
     </View>
