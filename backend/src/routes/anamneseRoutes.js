@@ -5,14 +5,18 @@ import {
   aprovarAnamneseController,
   reprovarAnamneseController,
   iniciarAnamneseController,
+  buscarAnamnesePorPacienteController,
+  atualizarAnamneseController,
 } from "../controllers/anamneseController.js";
 
 const router = Router();
 
-router.get("/anamnese/:id", buscarAnamnesePorIdController);
-router.get("/anamnese/iniciar/:idPaciente", iniciarAnamneseController);
-router.post("/anamnese", criarAnamneseController);
-router.post("/anamnese/:id/aprovar", aprovarAnamneseController);
-router.post("/anamnese/:id/reprovar", reprovarAnamneseController);
+router.get("/:id", buscarAnamnesePorIdController);
+router.get("/iniciar/:idPaciente", iniciarAnamneseController);
+router.get("/paciente/:idPaciente", buscarAnamnesePorPacienteController); // 👈 nova rota
+router.post("/", criarAnamneseController);
+router.post("/:id/aprovar", aprovarAnamneseController);
+router.post("/:id/reprovar", reprovarAnamneseController);
+router.put("/:id", atualizarAnamneseController);
 
 export default router;

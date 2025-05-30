@@ -1,4 +1,4 @@
-import { useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import axios from "axios";
 import React, { useEffect, useState } from "react";
 import {
@@ -27,6 +27,7 @@ export default function AnamneseScreen() {
   const isSupervisor = userType === "supervisor";
   const isNova = id === "novo";
   const isEditable = isEstagiario && (isNova || status === "Reprovado");
+  const router = useRouter();
 
   const [carregando, setCarregando] = useState(true);
   const [observacao, setObservacao] = useState("");
@@ -49,7 +50,7 @@ export default function AnamneseScreen() {
           setRespostas(respostasIniciais);
         } else {
           const { data } = await axios.get(
-            `http://192.168.15.8:3000/anamnese/${id}`
+            `http://192.168.15.8:3000/anamnese/paciente/${pacienteId}`
           );
           setRespostas(data.respostas || []);
           setObservacao(data.OBSERVACOES || "");
@@ -63,27 +64,50 @@ export default function AnamneseScreen() {
     }
 
     carregarDados();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function handleSalvar() {
     try {
-      await axios.post("http://192.168.15.8:3000/anamnese", {
-        ID_PACIENTE: Number(pacienteId),
-        ID_PROFISSIO: Number(profissionalId),
-        NOMERESP: "Responsável Fictício",
-        CPFRESP: "12345678901",
-        AUTVISIB: true,
-        STATUSANM: "PENDENTE",
-        STATUSFUNC: 1,
-        OBSERVACOES: "",
-        respostas: respostas.map((r) => ({
-          ID_PERGUNTA: r.ID_PERGUNTA,
-          RESPSUBJET: r.RESPSUBJET,
-          RESPOBJET: r.RESPOBJET,
-        })),
-      });
-      Alert.alert("Sucesso", "Anamnese salva com sucesso.");
+      if (id === "novo") {
+        await axios.post("http://192.168.15.8:3000/anamnese", {
+          ID_PACIENTE: Number(pacienteId),
+          ID_PROFISSIO: Number(profissionalId),
+          NOMERESP: "Responsável Fictício",
+          CPFRESP: "12345678901",
+          AUTVISIB: true,
+          STATUSANM: "PENDENTE",
+          STATUSFUNC: 1,
+          OBSERVACOES: "",
+          respostas: respostas.map((r) => ({
+            ID_PERGUNTA: r.ID_PERGUNTA,
+            RESPSUBJET: r.RESPSUBJET,
+            RESPOBJET: r.RESPOBJET,
+          })),
+        });
+      } else {
+        await axios.put(`http://192.168.15.8:3000/anamnese/${id}`, {
+          respostas: respostas.map((r) => ({
+            ID_PERGUNTA: r.ID_PERGUNTA,
+            RESPSUBJET: r.RESPSUBJET,
+            RESPOBJET: r.RESPOBJET,
+          })),
+        });
+      }
+
+      Alert.alert("Sucesso", "Anamnese salva com sucesso.", [
+        {
+          text: "OK",
+          onPress: () => {
+            router.replace({
+              pathname: "/pacientes",
+              params: { userType }, // <- passa de volta para a próxima tela
+            });
+          },
+        },
+      ]);
     } catch (err) {
+      console.error("Erro ao salvar anamnese:", err);
       Alert.alert("Erro", "Não foi possível salvar.");
     }
   }
@@ -91,7 +115,17 @@ export default function AnamneseScreen() {
   async function handleAprovar() {
     try {
       await axios.post(`http://192.168.15.8:3000/anamnese/${id}/aprovar`);
-      Alert.alert("Sucesso", "Anamnese aprovada.");
+      Alert.alert("Sucesso", "Anamnese aprovada com sucesso.", [
+        {
+          text: "OK",
+          onPress: () => {
+            router.replace({
+              pathname: "/pacientes",
+              params: { userType }, // <- passa de volta para a próxima tela
+            });
+          },
+        },
+      ]);
     } catch {
       Alert.alert("Erro", "Erro ao aprovar.");
     }
@@ -105,7 +139,17 @@ export default function AnamneseScreen() {
       await axios.post(`http://192.168.15.8:3000/anamnese/${id}/reprovar`, {
         observacoes: observacao,
       });
-      Alert.alert("Sucesso", "Anamnese reprovada.");
+      Alert.alert("Sucesso", "Anamnese reprovada com sucesso.", [
+        {
+          text: "OK",
+          onPress: () => {
+            router.replace({
+              pathname: "/pacientes",
+              params: { userType }, // <- passa de volta para a próxima tela
+            });
+          },
+        },
+      ]);
     } catch {
       Alert.alert("Erro", "Erro ao reprovar.");
     }
@@ -188,7 +232,8 @@ export default function AnamneseScreen() {
           </View>
         ))}
 
-        {isSupervisor && (
+        {/* Apenas SUPERVISOR (e não para anamnese nova) */}
+        {isSupervisor && !isNova && (
           <>
             <TextInput
               style={[styles.input, styles.textArea]}
@@ -203,12 +248,14 @@ export default function AnamneseScreen() {
           </>
         )}
 
+        {/* Botão SALVAR apenas para Estagiário */}
         {isEstagiario && (
           <TouchableOpacity style={styles.salvar} onPress={handleSalvar}>
             <Text style={styles.buttonText}>SALVAR</Text>
           </TouchableOpacity>
         )}
 
+        {/* Botões Aprovar/Reprovar apenas para Supervisor */}
         {isSupervisor && (
           <View style={styles.actions}>
             <TouchableOpacity style={styles.reprovar} onPress={handleReprovar}>
@@ -220,7 +267,8 @@ export default function AnamneseScreen() {
           </View>
         )}
 
-        {isEstagiario && status === "Reprovado" && observacao && (
+        {/* Observações visíveis apenas para estagiário com status "Reprovado" */}
+        {isEstagiario && !isNova && status === "Reprovado" && observacao && (
           <Text style={styles.observacao}>
             OBSERVAÇÃO DO SUPERVISOR: {observacao}
           </Text>

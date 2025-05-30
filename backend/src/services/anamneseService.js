@@ -49,24 +49,30 @@ export async function buscarAnamnesePorIdService(id) {
 
   const respostas = await Resposta.findAll({
     where: { ID_ANAMNESE: id },
-    include: [{ model: Pergunta, attributes: ["PERGUNTA"] }],
+    include: [
+      {
+        model: Pergunta,
+        as: "pergunta", // 👈 deve bater com o alias acima
+        attributes: ["PERGUNTA", "TIPO"],
+      },
+    ],
   });
-
-  const respostasFormatadas = respostas.map((res) => ({
-    IDRESPOSTA: res.IDRESPOSTA,
-    ID_PERGUNTA: res.ID_PERGUNTA,
-    PERGUNTA: res.Pergunta?.PERGUNTA,
-    RESPSUBJET: res.RESPSUBJET,
-    RESPOBJET: res.RESPOBJET,
-  }));
 
   return {
     ...anamnese.toJSON(),
-    respostas: respostasFormatadas,
+    respostas: respostas.map((res) => ({
+      IDRESPOSTA: res.IDRESPOSTA,
+      ID_PERGUNTA: res.ID_PERGUNTA,
+      PERGUNTA: res.pergunta?.PERGUNTA,
+      TIPO: res.pergunta?.TIPO,
+      RESPSUBJET: res.RESPSUBJET,
+      RESPOBJET: res.RESPOBJET,
+    })),
   };
 }
 
 export async function aprovarAnamneseService(id) {
+  console.log("Tentando aprovar anamnese ID:", id); // 👈 log
   const anamnese = await Anamnese.findByPk(id);
   if (!anamnese) throw new Error("Anamnese não encontrada.");
 
@@ -138,4 +144,35 @@ export async function iniciarAnamneseService(idPaciente) {
       })),
     };
   }
+}
+
+export async function buscarAnamnesePorPacienteService(idPaciente) {
+  const ultima = await Anamnese.findOne({
+    where: { ID_PACIENTE: idPaciente },
+    order: [["DATAANAM", "DESC"]],
+  });
+
+  if (!ultima) return null;
+
+  const respostas = await Resposta.findAll({
+    where: { ID_ANAMNESE: ultima.IDANAMNESE },
+    include: [
+      {
+        model: Pergunta,
+        as: "pergunta", // 👈 deve bater com o alias acima
+        attributes: ["PERGUNTA", "TIPO"],
+      },
+    ],
+  });
+
+  return {
+    ...ultima.toJSON(),
+    respostas: respostas.map((r) => ({
+      ID_PERGUNTA: r.ID_PERGUNTA,
+      PERGUNTA: r.pergunta?.PERGUNTA,
+      TIPO: r.pergunta?.TIPO,
+      RESPSUBJET: r.RESPSUBJET,
+      RESPOBJET: r.RESPOBJET,
+    })),
+  };
 }

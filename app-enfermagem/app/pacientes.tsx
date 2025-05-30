@@ -1,4 +1,6 @@
-import { useEffect, useState } from "react";
+import { useState, useCallback } from "react";
+import { useFocusEffect } from "@react-navigation/native";
+
 import { useLocalSearchParams, useRouter } from "expo-router";
 import {
   FlatList,
@@ -7,86 +9,83 @@ import {
   TouchableOpacity,
   View,
   Alert,
+  ActivityIndicator,
 } from "react-native";
-
-type AnamneseStatus = "Aprovado" | "Pendente" | "Reprovado";
+import axios from "axios";
 
 type Paciente = {
-  id: string;
-  nome: string;
-  cpf: string;
-  anamnese: {
-    id: string;
-    status: AnamneseStatus;
-  } | null;
-};
-
-const mockPacientes: Paciente[] = [
-  {
-    id: "1",
-    nome: "João Silva",
-    cpf: "111.222.333-44",
-    anamnese: { id: "101", status: "Aprovado" },
-  },
-  {
-    id: "2",
-    nome: "Maria Souza",
-    cpf: "555.666.777-88",
-    anamnese: null,
-  },
-  {
-    id: "3",
-    nome: "Carlos Lima",
-    cpf: "999.000.111-22",
-    anamnese: { id: "103", status: "Reprovado" },
-  },
-];
-
-const getStatusColor = (status: AnamneseStatus) => {
-  switch (status) {
-    case "Aprovado":
-      return "#1DB954";
-    case "Pendente":
-      return "#FFD700";
-    case "Reprovado":
-      return "#FF4C4C";
-    default:
-      return "#aaa";
-  }
+  IDPACIENTE: number;
+  RGPACIENTE: string;
+  ESTDORGPAC: string;
+  STATUSANM: "Pendente" | "Aprovado" | "Reprovado";
+  NOMEPESSOA: string;
+  TEM_ANAMNESE?: boolean; // 👈 adicionado aqui
+  IDANAMNESE?: number | null; // 👈 novo campo
 };
 
 export default function ListaPacientesScreen() {
   const { userType } = useLocalSearchParams<{ userType: string }>();
   const router = useRouter();
-  const [pacientes, setPacientes] = useState<Paciente[]>(mockPacientes);
+  const [pacientes, setPacientes] = useState<Paciente[]>([]);
+  const [carregando, setCarregando] = useState(true);
+
+  const buscarPacientes = async () => {
+    try {
+      const { data } = await axios.get("http://192.168.15.8:3000/pacientes", {
+        params: { userType },
+      });
+      setPacientes(data);
+    } catch {
+      Alert.alert("Erro", "Falha ao buscar pacientes.");
+    } finally {
+      setCarregando(false);
+    }
+  };
+
+  useFocusEffect(
+    useCallback(() => {
+      buscarPacientes();
+    }, [])
+  );
+
+  function getStatusColor(status: string) {
+    switch (status) {
+      case "Aprovado":
+        return "#005F3C";
+      case "Reprovado":
+        return "#FF8C42";
+      default:
+        return "#999";
+    }
+  }
 
   const handlePress = (paciente: Paciente) => {
     const user = String(userType).toLowerCase();
 
-    if (!paciente.anamnese) {
-      if (user === "estagiario") {
-        router.push({
-          pathname: "/anamnese/[id]",
-          params: {
-            id: "novo",
-            pacienteId: paciente.id,
-            userType: user,
-          },
-        });
-      } else {
-        Alert.alert("Sem Anamnese", "Este paciente ainda não possui anamnese.");
-      }
-    } else {
-      router.push({
-        pathname: "/anamnese/[id]",
-        params: {
-          id: paciente.anamnese.id,
-          userType: user,
-          status: paciente.anamnese.status,
-        },
-      });
-    }
+    const isNovaAnamnese =
+      !paciente.TEM_ANAMNESE && paciente.STATUSANM === "Pendente";
+
+    const anamneseId = isNovaAnamnese ? "novo" : String(paciente.IDANAMNESE);
+
+    router.push({
+      pathname: "/anamnese/[id]",
+      params: {
+        id: anamneseId,
+        pacienteId: paciente.IDPACIENTE,
+        userType: user,
+        profissionalId: 1, // pode ser ajustado depois com login real
+        status: paciente.STATUSANM,
+      },
+    });
   };
+
+  if (carregando) {
+    return (
+      <View style={styles.container}>
+        <ActivityIndicator size="large" color="#005F3C" />
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -96,36 +95,37 @@ export default function ListaPacientesScreen() {
       <View style={styles.tableWrapper}>
         <View style={styles.tableHeader}>
           <Text style={[styles.headerCell, { flex: 0.5 }]}>#</Text>
-          <Text style={[styles.headerCell, { flex: 2 }]}>Nome</Text>
-          <Text style={[styles.headerCell, { flex: 1.5 }]}>CPF</Text>
-          <Text style={[styles.headerCell, { flex: 1 }]}>Status</Text>
+          <Text style={[styles.headerCell, { flex: 2 }]}>NOME</Text>
+          <Text style={[styles.headerCell, { flex: 1 }]}>UF</Text>
+          <Text style={[styles.headerCell, { flex: 1 }]}>STATUS</Text>
         </View>
 
         <FlatList
           data={pacientes}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => {
-            const status = item.anamnese?.status ?? "Pendente";
-            return (
-              <TouchableOpacity onPress={() => handlePress(item)}>
-                <View style={styles.tableRow}>
-                  <Text style={[styles.cell, { flex: 0.5 }]}>{item.id}</Text>
-                  <Text style={[styles.cell, { flex: 2 }]}>{item.nome}</Text>
-                  <Text style={[styles.cell, { flex: 1.5 }]}>{item.cpf}</Text>
-                  <View style={[styles.badgeContainer, { flex: 1 }]}>
-                    <Text
-                      style={[
-                        styles.badge,
-                        { backgroundColor: getStatusColor(status) },
-                      ]}
-                    >
-                      {status}
-                    </Text>
-                  </View>
-                </View>
-              </TouchableOpacity>
-            );
-          }}
+          keyExtractor={(item) => String(item.IDPACIENTE)}
+          renderItem={({ item }) => (
+            <TouchableOpacity onPress={() => handlePress(item)}>
+              <View style={styles.tableRow}>
+                <Text style={[styles.cell, { flex: 0.5 }]}>
+                  {item.IDPACIENTE}
+                </Text>
+                <Text style={[styles.cell, { flex: 2 }]}>
+                  {item.NOMEPESSOA}
+                </Text>
+                <Text style={[styles.cell, { flex: 1 }]}>
+                  {item.ESTDORGPAC}
+                </Text>
+                <Text
+                  style={[
+                    styles.cell,
+                    { flex: 1, color: getStatusColor(item.STATUSANM) },
+                  ]}
+                >
+                  {item.STATUSANM}
+                </Text>
+              </View>
+            </TouchableOpacity>
+          )}
         />
       </View>
     </View>
@@ -180,19 +180,5 @@ const styles = StyleSheet.create({
   cell: {
     fontSize: 14,
     color: "#222",
-  },
-  badgeContainer: {
-    alignItems: "flex-start",
-    justifyContent: "center",
-  },
-  badge: {
-    color: "#fff",
-    fontSize: 12,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-    overflow: "hidden",
-    fontWeight: "bold",
-    alignSelf: "flex-start",
   },
 });
