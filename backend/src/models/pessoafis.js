@@ -2,19 +2,10 @@
 import { DataTypes } from "sequelize";
 import { Sequelize } from "sequelize";
 import { development } from "../config/database.js";
-
-export const sequelize = new Sequelize(
-  development.database,
-  development.username,
-  development.password,
-  {
-    host: development.host,
-    dialect: development.dialect,
-  }
-);
+import { sequelize } from "./anamnese.js";
 
 export const PessoaFisica = sequelize.define(
-  "PessoaFisica",
+  "PESSOAFIS",
   {
     IDPESSOAFIS: {
       type: DataTypes.INTEGER,
@@ -48,7 +39,7 @@ export const PessoaFisica = sequelize.define(
     },
   },
   {
-    tableName: "pessoafis",
+    tableName: "PESSOAFIS",
     timestamps: false,
   }
 );

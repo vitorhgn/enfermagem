@@ -2,19 +2,10 @@
 import { DataTypes } from "sequelize";
 import { Sequelize } from "sequelize";
 import { development } from "../config/database.js";
-
-export const sequelize = new Sequelize(
-  development.database,
-  development.username,
-  development.password,
-  {
-    host: development.host,
-    dialect: development.dialect,
-  }
-);
+import { sequelize } from "./anamnese.js";
 
 export const Pergunta = sequelize.define(
-  "Pergunta",
+  "PERGUNTA",
   {
     IDPERGUNTA: {
       type: DataTypes.INTEGER,
@@ -29,13 +20,9 @@ export const Pergunta = sequelize.define(
       type: DataTypes.ENUM("O", "S", "A"),
       allowNull: false,
     },
-    MODULO: {
-      type: DataTypes.ENUM("ENF", "FIS", "ODO"),
-      allowNull: false,
-    },
   },
   {
-    tableName: "pergunta",
+    tableName: "PERGUNTA",
     timestamps: false,
   }
 );

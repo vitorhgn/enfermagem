@@ -1,22 +1,12 @@
 // models/paciente.ts
 import { DataTypes } from "sequelize";
-import { Anamnese } from "./anamnese.js";
+import { Anamnese, sequelize } from "./anamnese.js";
 import { PessoaFisica } from "./pessoafis.js";
 import { Sequelize } from "sequelize";
 import { development } from "../config/database.js";
 
-export const sequelize = new Sequelize(
-  development.database,
-  development.username,
-  development.password,
-  {
-    host: development.host,
-    dialect: development.dialect,
-  }
-);
-
 export const Paciente = sequelize.define(
-  "Paciente",
+  "PACIENTE",
   {
     IDPACIENTE: {
       type: DataTypes.INTEGER,
@@ -32,7 +22,7 @@ export const Paciente = sequelize.define(
     STATUSPAC: DataTypes.BOOLEAN,
   },
   {
-    tableName: "paciente",
+    tableName: "PACIENTE",
     timestamps: false,
   }
 );

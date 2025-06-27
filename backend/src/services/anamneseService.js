@@ -1,18 +1,8 @@
-import { Anamnese } from "../models/anamnese.js";
+import { Anamnese, sequelize } from "../models/anamnese.js";
 import { Resposta } from "../models/resposta.js";
 import { Pergunta } from "../models/pergunta.js";
 import { Sequelize } from "sequelize";
 import { development } from "../config/database.js";
-
-export const sequelize = new Sequelize(
-  development.database,
-  development.username,
-  development.password,
-  {
-    host: development.host,
-    dialect: development.dialect,
-  }
-);
 
 export async function criarAnamneseService(anamneseData, respostas) {
   const transaction = await sequelize.transaction();
@@ -100,6 +90,8 @@ export async function iniciarAnamneseService(idPaciente) {
     order: [["DATAANAM", "DESC"]],
   });
 
+  console.log("ULTIMA:", ultima);
+
   if (!ultima || ultima.STATUSANM === "APROVADO") {
     const nova = await Anamnese.create({
       ID_PACIENTE: idPaciente,
@@ -108,7 +100,7 @@ export async function iniciarAnamneseService(idPaciente) {
       NOMERESP: null,
       CPFRESP: null,
       AUTVISIB: 1,
-      STATUSANM: "PENDENTE",
+      STATUSANM: "CANCELADO",
       STATUSFUNC: 1,
       OBSERVACOES: null,
     });

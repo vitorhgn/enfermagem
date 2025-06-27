@@ -5,6 +5,7 @@ export async function getRespostasPorAnamnese(req, res) {
   const { id } = req.params;
   try {
     const respostas = await respostaService.listarRespostasPorAnamnese(id);
+    console.log("RESPOSTAS", respostas);
     const formatadas = respostas.map((res) => ({
       IDRESPOSTA: res.IDRESPOSTA,
       ID_PERGUNTA: res.ID_PERGUNTA,

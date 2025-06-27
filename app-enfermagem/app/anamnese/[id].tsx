@@ -38,7 +38,7 @@ export default function AnamneseScreen() {
       try {
         if (isNova) {
           const { data: perguntas } = await axios.get(
-            "http://192.168.15.8:3000/perguntas"
+            "http://192.168.0.242:5380/perguntas"
           );
           const respostasIniciais = perguntas.map((p: any) => ({
             ID_PERGUNTA: p.IDPERGUNTA,
@@ -50,7 +50,7 @@ export default function AnamneseScreen() {
           setRespostas(respostasIniciais);
         } else {
           const { data } = await axios.get(
-            `http://192.168.15.8:3000/anamnese/paciente/${pacienteId}`
+            `http://192.168.0.242:5380/anamnese/paciente/${pacienteId}`
           );
           setRespostas(data.respostas || []);
           setObservacao(data.OBSERVACOES || "");
@@ -70,7 +70,7 @@ export default function AnamneseScreen() {
   async function handleSalvar() {
     try {
       if (id === "novo") {
-        await axios.post("http://192.168.15.8:3000/anamnese", {
+        await axios.post("http://192.168.0.242:5380/anamnese", {
           ID_PACIENTE: Number(pacienteId),
           ID_PROFISSIO: Number(profissionalId),
           NOMERESP: "Responsável Fictício",
@@ -86,7 +86,7 @@ export default function AnamneseScreen() {
           })),
         });
       } else {
-        await axios.put(`http://192.168.15.8:3000/anamnese/${id}`, {
+        await axios.put(`http://192.168.0.242:5380/anamnese/${id}`, {
           respostas: respostas.map((r) => ({
             ID_PERGUNTA: r.ID_PERGUNTA,
             RESPSUBJET: r.RESPSUBJET,
@@ -114,7 +114,7 @@ export default function AnamneseScreen() {
 
   async function handleAprovar() {
     try {
-      await axios.post(`http://192.168.15.8:3000/anamnese/${id}/aprovar`);
+      await axios.post(`http://192.168.0.242:5380/anamnese/${id}/aprovar`);
       Alert.alert("Sucesso", "Anamnese aprovada com sucesso.", [
         {
           text: "OK",
@@ -136,7 +136,7 @@ export default function AnamneseScreen() {
       return Alert.alert("Erro", "Observação obrigatória para reprovar.");
     }
     try {
-      await axios.post(`http://192.168.15.8:3000/anamnese/${id}/reprovar`, {
+      await axios.post(`http://192.168.0.242:5380/anamnese/${id}/reprovar`, {
         observacoes: observacao,
       });
       Alert.alert("Sucesso", "Anamnese reprovada com sucesso.", [

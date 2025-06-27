@@ -1,48 +1,49 @@
 // controllers/pacienteController.ts
 import { Paciente } from "../models/paciente.js";
-import { Anamnese } from "../models/anamnese.js";
+import { Anamnese, sequelize } from "../models/anamnese.js";
 import { PessoaFisica } from "../models/pessoafis.js";
 
 export async function listarPacientesComStatusAnamnese(req, res) {
   const { userType } = req.query;
 
   try {
-    const pacientes = await Paciente.findAll({
-      include: [
-        {
-          model: Anamnese,
-          required: false,
-          attributes: ["STATUSANM", "IDANAMNESE"],
-        },
-        {
-          model: PessoaFisica,
-          required: true,
-          attributes: ["NOMEPESSOA"],
-        },
-      ],
-    });
+    const [pacientes] = await sequelize.query(
+      `SELECT 
+	      PACIENTE.IDPACIENTE, 
+        PACIENTE.ID_PESSOAFIS, 
+        PACIENTE.RGPACIENTE, 
+        PACIENTE.ESTDORGPAC, 
+        PACIENTE.STATUSPAC, 
+	      ANAMNESE.STATUSANM, 
+        ANAMNESE.IDANAMNESE, 
+        PESSOAFI.IDPESSOAFIS, 
+        PESSOAFI.NOMEPESSOA 
+      FROM PACIENTE 
+      LEFT OUTER JOIN ANAMNESE AS ANAMNESE ON PACIENTE.IDPACIENTE = ANAMNESE.ID_PACIENTE 
+      INNER JOIN PESSOAFIS AS PESSOAFI ON PACIENTE.ID_PESSOAFIS = PESSOAFI.IDPESSOAFIS`,
+    );
 
     const lista = pacientes.map((pac) => {
-      const temAnamnese = !!pac.Anamnese;
+      const temAnamnese = !!pac.IDANAMNESE;
       const status =
-        pac.Anamnese?.STATUSANM === "APROVADO"
+        pac.STATUSANM === "APROVADO"
           ? "Aprovado"
-          : pac.Anamnese?.STATUSANM === "REPROVADO"
+          : pac.STATUSANM === "REPROVADO"
           ? "Reprovado"
-          : pac.Anamnese?.STATUSANM === "PENDENTE"
+          : pac.STATUSANM === "PENDENTE"
           ? "Pendente"
           : "Pendente"; // fallback para estagiário
 
-      return {
-        IDPACIENTE: pac.IDPACIENTE,
-        RGPACIENTE: pac.RGPACIENTE,
-        ESTDORGPAC: pac.ESTDORGPAC,
-        NOMEPESSOA: pac.PessoaFisica?.NOMEPESSOA || "Sem nome",
-        STATUSANM: status,
-        TEM_ANAMNESE: temAnamnese,
-        IDANAMNESE: pac.Anamnese?.IDANAMNESE || null,
-      };
-    });
+          return {
+            IDPACIENTE: pac.IDPACIENTE,
+            RGPACIENTE: pac.RGPACIENTE,
+            ESTDORGPAC: pac.ESTDORGPAC,
+            NOMEPESSOA: pac.NOMEPESSOA || "Sem nome",
+            STATUSANM: status,
+            TEM_ANAMNESE: temAnamnese,
+            IDANAMNESE: pac.IDANAMNESE || null,
+          };
+        });
 
     const filtrados = lista.filter((pac) => {
       switch (userType) {

@@ -2,18 +2,12 @@
 import Sequelize from "sequelize";
 import path from "path";
 import { fileURLToPath } from "url";
-import { Anamnese } from "./anamnese.js";
+import { Anamnese, sequelize } from "./anamnese.js";
 import { Resposta } from "./resposta.js";
 import { Pergunta } from "./pergunta.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
-// Crie a instância de conexão
-const sequelize = new Sequelize("fasiclin", "root", "", {
-  host: "localhost",
-  dialect: "mysql",
-});
 
 // Inicialize os modelos já definidos
 Anamnese.sequelize = sequelize;

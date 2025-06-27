@@ -9,12 +9,13 @@ export const sequelize = new Sequelize(
   development.password,
   {
     host: development.host,
+    port: development.port,
     dialect: development.dialect,
   }
 );
 
 export const Anamnese = sequelize.define(
-  "Anamnese",
+  "ANAMNESE",
   {
     IDANAMNESE: {
       type: DataTypes.INTEGER,
@@ -59,7 +60,7 @@ export const Anamnese = sequelize.define(
     },
   },
   {
-    tableName: "anamnese",
+    tableName: "ANAMNESE",
     timestamps: false,
   }
 );

@@ -31,7 +31,7 @@ export default function ListaPacientesScreen() {
 
   const buscarPacientes = async () => {
     try {
-      const { data } = await axios.get("http://192.168.15.8:3000/pacientes", {
+      const { data } = await axios.get("http://192.168.0.242:5380/pacientes", {
         params: { userType },
       });
       setPacientes(data);

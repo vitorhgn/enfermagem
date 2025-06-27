@@ -1,21 +1,11 @@
 import { DataTypes } from "sequelize";
 import { Pergunta } from "./pergunta.js";
-import { Anamnese } from "./anamnese.js";
+import { Anamnese, sequelize } from "./anamnese.js";
 import { Sequelize } from "sequelize";
 import { development } from "../config/database.js";
 
-export const sequelize = new Sequelize(
-  development.database,
-  development.username,
-  development.password,
-  {
-    host: development.host,
-    dialect: development.dialect,
-  }
-);
-
 export const Resposta = sequelize.define(
-  "resposta",
+  "RESPOSTA",
   {
     IDRESPOSTA: {
       type: DataTypes.INTEGER,
@@ -40,7 +30,7 @@ export const Resposta = sequelize.define(
     },
   },
   {
-    tableName: "resposta",
+    tableName: "RESPOSTA",
     timestamps: false,
   }
 );

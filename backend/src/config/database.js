@@ -3,9 +3,10 @@ import dotenv from "dotenv";
 dotenv.config();
 
 export const development = {
-  username: "root",
-  password: "",
+  host: "160.20.22.99",
+  port: "3360",
+  username: "aluno39",
+  password: "LBEfu0MVZP8=",
   database: "fasiclin",
-  host: "127.0.0.1",
   dialect: "mysql",
 };
