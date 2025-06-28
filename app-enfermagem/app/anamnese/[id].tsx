@@ -23,11 +23,14 @@ type Resposta = {
 export default function AnamneseScreen() {
   const { userType, status, id, pacienteId, profissionalId } =
     useLocalSearchParams();
-  const isEstagiario = userType === "estagiario";
-  const isSupervisor = userType === "supervisor";
+
+  const router = useRouter();
+  const userTypeNumber = Number(userType);
+
+  const isEstagiario = userTypeNumber === 1;
+  const isSupervisor = userTypeNumber === 3;
   const isNova = id === "novo";
   const isEditable = isEstagiario && (isNova || status === "Reprovado");
-  const router = useRouter();
 
   const [carregando, setCarregando] = useState(true);
   const [observacao, setObservacao] = useState("");
@@ -64,7 +67,6 @@ export default function AnamneseScreen() {
     }
 
     carregarDados();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function handleSalvar() {
@@ -101,7 +103,7 @@ export default function AnamneseScreen() {
           onPress: () => {
             router.replace({
               pathname: "/pacientes",
-              params: { userType }, // <- passa de volta para a próxima tela
+              params: { userType: String(userTypeNumber) },
             });
           },
         },
@@ -121,7 +123,7 @@ export default function AnamneseScreen() {
           onPress: () => {
             router.replace({
               pathname: "/pacientes",
-              params: { userType }, // <- passa de volta para a próxima tela
+              params: { userType: String(userTypeNumber) },
             });
           },
         },
@@ -145,7 +147,7 @@ export default function AnamneseScreen() {
           onPress: () => {
             router.replace({
               pathname: "/pacientes",
-              params: { userType }, // <- passa de volta para a próxima tela
+              params: { userType: String(userTypeNumber) },
             });
           },
         },
@@ -204,48 +206,41 @@ export default function AnamneseScreen() {
             )}
 
             {res.TIPO === "O" && (
-              <View style={styles.radioContainer}>
-                <View style={styles.radioOpcoes}>
-                  <TouchableOpacity
-                    style={[
-                      styles.radioBotao,
-                      res.RESPOBJET === 1 && styles.radioSelecionado,
-                    ]}
-                    onPress={() => {
-                      if (!isEditable) return;
-                      const novas = [...respostas];
-                      novas[index].RESPOBJET = 1;
-                      setRespostas(novas);
-                    }}
-                  >
-                    <Text style={styles.radioTexto}>
-                      {res.RESPOBJET === 1 ? "Sim" : "Sim"}
-                    </Text>
-                  </TouchableOpacity>
-                  
-                  <TouchableOpacity
-                    style={[
-                      styles.radioBotao,
-                      res.RESPOBJET === 0 && styles.radioSelecionado,
-                    ]}
-                    onPress={() => {
-                      if (!isEditable) return;
-                      const novas = [...respostas];
-                      novas[index].RESPOBJET = 0;
-                      setRespostas(novas);
-                    }}
-                  >
-                    <Text style={styles.radioTexto}>
-                      {res.RESPOBJET === 0 ? "Não" : "Não"}
-                    </Text>
-                  </TouchableOpacity>
-                </View>
+              <View style={styles.radioOpcoes}>
+                <TouchableOpacity
+                  style={[
+                    styles.radioBotao,
+                    res.RESPOBJET === 1 && styles.radioSelecionado,
+                  ]}
+                  onPress={() => {
+                    if (!isEditable) return;
+                    const novas = [...respostas];
+                    novas[index].RESPOBJET = 1;
+                    setRespostas(novas);
+                  }}
+                >
+                  <Text style={styles.radioTexto}>Sim</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[
+                    styles.radioBotao,
+                    res.RESPOBJET === 0 && styles.radioSelecionado,
+                  ]}
+                  onPress={() => {
+                    if (!isEditable) return;
+                    const novas = [...respostas];
+                    novas[index].RESPOBJET = 0;
+                    setRespostas(novas);
+                  }}
+                >
+                  <Text style={styles.radioTexto}>Não</Text>
+                </TouchableOpacity>
               </View>
             )}
           </View>
         ))}
 
-        {/* Apenas SUPERVISOR (e não para anamnese nova) */}
         {isSupervisor && !isNova && (
           <>
             <TextInput
@@ -261,14 +256,12 @@ export default function AnamneseScreen() {
           </>
         )}
 
-        {/* Botão SALVAR apenas para Estagiário */}
         {isEstagiario && (
           <TouchableOpacity style={styles.salvar} onPress={handleSalvar}>
             <Text style={styles.buttonText}>SALVAR</Text>
           </TouchableOpacity>
         )}
 
-        {/* Botões Aprovar/Reprovar apenas para Supervisor */}
         {isSupervisor && (
           <View style={styles.actions}>
             <TouchableOpacity style={styles.reprovar} onPress={handleReprovar}>
@@ -280,7 +273,6 @@ export default function AnamneseScreen() {
           </View>
         )}
 
-        {/* Observações visíveis apenas para estagiário com status "Reprovado" */}
         {isEstagiario && !isNova && status === "Reprovado" && observacao && (
           <Text style={styles.observacao}>
             OBSERVAÇÃO DO SUPERVISOR: {observacao}
@@ -330,13 +322,6 @@ const styles = StyleSheet.create({
     height: 100,
     textAlignVertical: "top",
   },
-  select: {
-    backgroundColor: "#F7F7F7",
-    padding: 12,
-    borderRadius: 10,
-    justifyContent: "center",
-    height: 48,
-  },
   salvar: {
     backgroundColor: "#005F3C",
     paddingVertical: 14,
@@ -385,16 +370,10 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 18,
   },
-  radioContainer: {
-    marginVertical: 8,
-  },
-  perguntaTexto: {
-    marginBottom: 6,
-    fontWeight: "bold",
-  },
   radioOpcoes: {
     flexDirection: "row",
     justifyContent: "space-around",
+    marginTop: 8,
   },
   radioBotao: {
     paddingVertical: 10,

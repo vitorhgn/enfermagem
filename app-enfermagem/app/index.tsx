@@ -1,4 +1,5 @@
 import { useRouter } from "expo-router";
+import axios from "axios";
 import React, { useState } from "react";
 import {
   Alert,
@@ -19,31 +20,32 @@ export default function LoginScreen() {
   const [senha, setSenha] = useState("");
   const router = useRouter();
 
-  const handleLogin = () => {
-    const userType = usuario.toLowerCase() as
-      | "estagiario"
-      | "supervisor"
-      | "coordenador";
+  const handleLogin = async () => {
+    if (!usuario.trim() || !senha.trim()) {
+      return Alert.alert("Erro", "Preencha login e senha.");
+    }
 
-    const validUsers = {
-      estagiario: 1,
-      supervisor: 2,
-      coordenador: 3,
-    };
+    try {
+      const { data } = await axios.post("http://160.20.22.99:5380/auth/login", {
+        login: usuario,
+        senha: senha,
+      });
 
-    const idProfissio = validUsers[userType];
+      const { tipo, id_profissio } = data.usuario;
 
-    const loginValido = senha === "123" && idProfissio;
+      if (!tipo || !id_profissio) {
+        return Alert.alert("Erro", "Usuário sem permissão.");
+      }
 
-    if (loginValido) {
       router.push({
         pathname: "/pacientes",
         params: {
-          userType,
-          idProfissio: idProfissio.toString(), // o Expo Router envia como string
+          userType: tipo.toLowerCase(),
+          idProfissio: String(id_profissio),
         },
       });
-    } else {
+    } catch (err) {
+      console.error("Erro no login:", err);
       Alert.alert("Erro", "Usuário ou senha inválidos.");
     }
   };
@@ -65,7 +67,7 @@ export default function LoginScreen() {
           <View style={styles.form}>
             <TextInput
               style={styles.input}
-              placeholder="Usuário (estagiario, supervisor, coordenador)"
+              placeholder="Usuário"
               placeholderTextColor="#888"
               onChangeText={setUsuario}
               value={usuario}
@@ -94,7 +96,7 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#6AFF85", // verde clarinho
+    backgroundColor: "#6AFF85",
     alignItems: "center",
     justifyContent: "center",
     padding: 24,

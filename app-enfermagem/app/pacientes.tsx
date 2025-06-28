@@ -19,20 +19,23 @@ type Paciente = {
   ESTDORGPAC: string;
   STATUSANM: "Pendente" | "Aprovado" | "Reprovado";
   NOMEPESSOA: string;
-  TEM_ANAMNESE?: boolean; // 👈 adicionado aqui
-  IDANAMNESE?: number | null; // 👈 novo campo
+  TEM_ANAMNESE?: boolean;
+  IDANAMNESE?: number | null;
 };
 
 export default function ListaPacientesScreen() {
   const { userType } = useLocalSearchParams<{ userType: string }>();
   const router = useRouter();
+
+  const tipoUsuario = Number(userType); // converte para número
+
   const [pacientes, setPacientes] = useState<Paciente[]>([]);
   const [carregando, setCarregando] = useState(true);
 
   const buscarPacientes = async () => {
     try {
       const { data } = await axios.get("http://160.20.22.99:5380/pacientes", {
-        params: { userType },
+        params: { userType: tipoUsuario },
       });
       setPacientes(data);
     } catch {
@@ -60,8 +63,6 @@ export default function ListaPacientesScreen() {
   }
 
   const handlePress = (paciente: Paciente) => {
-    const user = String(userType).toLowerCase();
-
     const isNovaAnamnese =
       !paciente.TEM_ANAMNESE && paciente.STATUSANM === "Pendente";
 
@@ -72,12 +73,25 @@ export default function ListaPacientesScreen() {
       params: {
         id: anamneseId,
         pacienteId: paciente.IDPACIENTE,
-        userType: user,
-        profissionalId: 1, // pode ser ajustado depois com login real
+        userType: String(tipoUsuario),
+        profissionalId: 1, // substituir por valor real depois
         status: paciente.STATUSANM,
       },
     });
   };
+
+  function nomeUsuario(tipo: number) {
+    switch (tipo) {
+      case 1:
+        return "Estagiário";
+      case 3:
+        return "Supervisor";
+      case 4:
+        return "Coordenador";
+      default:
+        return "Desconhecido";
+    }
+  }
 
   if (carregando) {
     return (
@@ -90,7 +104,7 @@ export default function ListaPacientesScreen() {
   return (
     <View style={styles.container}>
       <Text style={styles.pageTitle}>Lista de Pacientes</Text>
-      <Text style={styles.subTitle}>Usuário: {userType}</Text>
+      <Text style={styles.subTitle}>Usuário: {nomeUsuario(tipoUsuario)}</Text>
 
       <View style={styles.tableWrapper}>
         <View style={styles.tableHeader}>

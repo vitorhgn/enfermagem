@@ -6,21 +6,24 @@ import { PessoaFisica } from "../models/pessoafis.js";
 export async function listarPacientesComStatusAnamnese(req, res) {
   const { userType } = req.query;
 
+  // Converte para número se for string
+  const tipo = Number(userType);
+
   try {
     const [pacientes] = await sequelize.query(
       `SELECT 
-	      PACIENTE.IDPACIENTE, 
+        PACIENTE.IDPACIENTE, 
         PACIENTE.ID_PESSOAFIS, 
         PACIENTE.RGPACIENTE, 
         PACIENTE.ESTDORGPAC, 
         PACIENTE.STATUSPAC, 
-	      ANAMNESE.STATUSANM, 
+        ANAMNESE.STATUSANM, 
         ANAMNESE.IDANAMNESE, 
         PESSOAFI.IDPESSOAFIS, 
         PESSOAFI.NOMEPESSOA 
       FROM PACIENTE 
       LEFT OUTER JOIN ANAMNESE AS ANAMNESE ON PACIENTE.IDPACIENTE = ANAMNESE.ID_PACIENTE 
-      INNER JOIN PESSOAFIS AS PESSOAFI ON PACIENTE.ID_PESSOAFIS = PESSOAFI.IDPESSOAFIS`,
+      INNER JOIN PESSOAFIS AS PESSOAFI ON PACIENTE.ID_PESSOAFIS = PESSOAFI.IDPESSOAFIS`
     );
 
     const lista = pacientes.map((pac) => {
@@ -32,26 +35,26 @@ export async function listarPacientesComStatusAnamnese(req, res) {
           ? "Reprovado"
           : pac.STATUSANM === "PENDENTE"
           ? "Pendente"
-          : "Pendente"; // fallback para estagiário
+          : "Pendente";
 
-          return {
-            IDPACIENTE: pac.IDPACIENTE,
-            RGPACIENTE: pac.RGPACIENTE,
-            ESTDORGPAC: pac.ESTDORGPAC,
-            NOMEPESSOA: pac.NOMEPESSOA || "Sem nome",
-            STATUSANM: status,
-            TEM_ANAMNESE: temAnamnese,
-            IDANAMNESE: pac.IDANAMNESE || null,
-          };
-        });
+      return {
+        IDPACIENTE: pac.IDPACIENTE,
+        RGPACIENTE: pac.RGPACIENTE,
+        ESTDORGPAC: pac.ESTDORGPAC,
+        NOMEPESSOA: pac.NOMEPESSOA || "Sem nome",
+        STATUSANM: status,
+        TEM_ANAMNESE: temAnamnese,
+        IDANAMNESE: pac.IDANAMNESE || null,
+      };
+    });
 
     const filtrados = lista.filter((pac) => {
-      switch (userType) {
-        case "estagiario":
+      switch (tipo) {
+        case 1: // Estagiário
           return !pac.TEM_ANAMNESE || pac.STATUSANM === "Reprovado";
-        case "supervisor":
+        case 3: // Supervisor
           return pac.TEM_ANAMNESE && pac.STATUSANM === "Pendente";
-        case "coordenador":
+        case 4: // Coordenador
           return pac.TEM_ANAMNESE && pac.STATUSANM === "Aprovado";
         default:
           return false;
