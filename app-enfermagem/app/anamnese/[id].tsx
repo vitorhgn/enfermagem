@@ -17,7 +17,7 @@ type Resposta = {
   PERGUNTA?: string;
   TIPO?: "S" | "O" | "A";
   RESPSUBJET?: string;
-  RESPOBJET?: boolean | string;
+  RESPOBJET?: boolean | string | number;
 };
 
 export default function AnamneseScreen() {
@@ -76,7 +76,7 @@ export default function AnamneseScreen() {
           NOMERESP: "Responsável Fictício",
           CPFRESP: "12345678901",
           AUTVISIB: true,
-          STATUSANM: "PENDENTE",
+          STATUSANM: "CANCELADO",
           STATUSFUNC: 1,
           OBSERVACOES: "",
           respostas: respostas.map((r) => ({
@@ -204,30 +204,43 @@ export default function AnamneseScreen() {
             )}
 
             {res.TIPO === "O" && (
-              <TouchableOpacity
-                style={styles.select}
-                onPress={() => {
-                  if (!isEditable) return;
-                  Alert.prompt("Resposta", res.PERGUNTA || "", [
-                    {
-                      text: "Cancelar",
-                      style: "cancel",
-                    },
-                    {
-                      text: "Salvar",
-                      onPress: (value) => {
-                        const novas = [...respostas];
-                        novas[index].RESPOBJET = value;
-                        setRespostas(novas);
-                      },
-                    },
-                  ]);
-                }}
-              >
-                <Text style={{ color: res.RESPOBJET ? "#000" : "#999" }}>
-                  {res.RESPOBJET || "Selecione uma resposta"}
-                </Text>
-              </TouchableOpacity>
+              <View style={styles.radioContainer}>
+                <View style={styles.radioOpcoes}>
+                  <TouchableOpacity
+                    style={[
+                      styles.radioBotao,
+                      res.RESPOBJET === 1 && styles.radioSelecionado,
+                    ]}
+                    onPress={() => {
+                      if (!isEditable) return;
+                      const novas = [...respostas];
+                      novas[index].RESPOBJET = 1;
+                      setRespostas(novas);
+                    }}
+                  >
+                    <Text style={styles.radioTexto}>
+                      {res.RESPOBJET === 1 ? "Sim" : "Sim"}
+                    </Text>
+                  </TouchableOpacity>
+                  
+                  <TouchableOpacity
+                    style={[
+                      styles.radioBotao,
+                      res.RESPOBJET === 0 && styles.radioSelecionado,
+                    ]}
+                    onPress={() => {
+                      if (!isEditable) return;
+                      const novas = [...respostas];
+                      novas[index].RESPOBJET = 0;
+                      setRespostas(novas);
+                    }}
+                  >
+                    <Text style={styles.radioTexto}>
+                      {res.RESPOBJET === 0 ? "Não" : "Não"}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
             )}
           </View>
         ))}
@@ -371,5 +384,30 @@ const styles = StyleSheet.create({
     fontStyle: "italic",
     fontSize: 13,
     lineHeight: 18,
+  },
+  radioContainer: {
+    marginVertical: 8,
+  },
+  perguntaTexto: {
+    marginBottom: 6,
+    fontWeight: "bold",
+  },
+  radioOpcoes: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+  },
+  radioBotao: {
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderWidth: 1,
+    borderColor: "#999",
+    borderRadius: 8,
+  },
+  radioSelecionado: {
+    backgroundColor: "#007BFF",
+    borderColor: "#007BFF",
+  },
+  radioTexto: {
+    color: "#000",
   },
 });

@@ -139,7 +139,7 @@ export async function atualizarAnamneseController(req, res) {
     if (!anamnese) return res.status(404).json({ erro: "Não encontrada" });
 
     // ⚠️ Resetar status para PENDENTE
-    anamnese.STATUSANM = "PENDENTE";
+    anamnese.STATUSANM = "CANCELADO";
     anamnese.OBSERVACOES = null;
     await anamnese.save();
 

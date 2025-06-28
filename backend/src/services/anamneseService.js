@@ -6,6 +6,7 @@ import { development } from "../config/database.js";
 
 export async function criarAnamneseService(anamneseData, respostas) {
   const transaction = await sequelize.transaction();
+  console.log(anamneseData);
 
   try {
     const novaAnamnese = await Anamnese.create(
