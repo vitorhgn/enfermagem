@@ -6,7 +6,7 @@
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "appenfermagem",
-    "userInterfaceStyle": "automatic",
+    "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true
@@ -16,7 +16,8 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "package": "com.majubri.appenfermagem"
     },
     "web": {
       "bundler": "metro",
@@ -25,7 +26,6 @@
     },
     "plugins": [
       "expo-router",
-      "expo-updates",
       [
         "expo-splash-screen",
         {
@@ -35,15 +35,24 @@
           "backgroundColor": "#ffffff"
         }
       ],
-      "expo-build-properties",
-      {
-        "android": {
-          "usesCleartextTraffic": true
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "usesCleartextTraffic": true
+          }
         }
-      }
+      ]
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "1dacdc0c-ed6d-451a-8dc0-47669b12208f"
+      }
+    },
+    "owner": "majubri"
   }
 }
