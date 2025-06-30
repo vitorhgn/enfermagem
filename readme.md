@@ -118,7 +118,7 @@ npx expo start
 
 Desenvolvido por: 
 
-[Maria Júlia Brilhante San Martin](https://github.com/Maju1903)
+[Maria Júlia Brilhante San Martin](https://github.com/Maju1903)  
 📧 brilhantemariajulia3@gmail.com
 
 [Vitor Hugo Gouveia Nunes](https://github.com/vitorhgn)  
